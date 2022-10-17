@@ -52,6 +52,7 @@ namespace myLibrary {
 			today.year = getThisYear();
 			return today;
 		}
+		
 		bool isLeapYear(short year) {
 			return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
 		}
@@ -81,6 +82,16 @@ namespace myLibrary {
 		int countSecondsInMonth(short year, short month) {
 			return countMinutesInMonth(year, month) * 60;
 		}
+
+		string getWeekDayName(short dayOrder) {
+			string weekDays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+			return weekDays[dayOrder];
+		}
+		string getMonthName(short& month) {
+			string monthsNames[] = { "","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" };
+			return monthsNames[month];
+		}
+
 		short getOrderWeekDayOfDate(short day, short month, short year) {
 			short a = floor((14 - month) / 12);
 			short y = year - a;
@@ -90,43 +101,23 @@ namespace myLibrary {
 			d = d % 7;
 			return d;
 		}
-		string getWeekDayName(short dayOrder) {
-			string weekDays[] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
-			return weekDays[dayOrder];
+		short getOrderWeekDayOfDate(sDate date) {
+			return getOrderWeekDayOfDate(date.day,date.month,date.year);
 		}
+
 		short countDaysFromBeginingOfYear(short& year, short& month, short day) {
 			for (short i = 1;i < month;i++) {
 				day += countDaysInMonth(year, i);
 			}
 			return day;
 		}
-		string getMonthName(short& month) {
-			string monthsNames[] = { "","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec" };
-			return monthsNames[month];
-		}
-		sDate addDays(sDate date, short days) {
-			short remainingDays = days + countDaysFromBeginingOfYear(date.year, date.month, date.day);
-			date.month = 1;
-			short monthDays;
-			while (true) {
-				monthDays = countDaysInMonth(date.year, date.month);
-
-				if (remainingDays > monthDays) {
-					remainingDays = remainingDays - monthDays;
-					date.month++;
-					if (date.month > 12) {
-						date.month = 1;
-						date.year++;
-					}
-				}
-				else {
-					date.day = remainingDays;
-					break;
-				}
-
+		short countDaysFromBeginingOfYear(sDate date) {
+			for (short i = 1;i < date.month;i++) {
+				date.day += countDaysInMonth(date.year, i);
 			}
-			return date;
+			return date.day;
 		}
+
 		bool isDate1LessThanDate2(sDate date1, sDate date2) {
 			return (date1.year < date2.year) ? true :
 				(date1.year == date2.year) ? (date1.month < date2.month) ? true :
@@ -141,7 +132,8 @@ namespace myLibrary {
 		bool isLastMonthInYear(short month) {
 			return month == 12;
 		}
-		sDate addOneDayToDate(sDate date) {
+
+		sDate increaseDateByOneDay(sDate date) {
 			if (isLastDayInMonth(date)) {
 				if (isLastMonthInYear(date.month)) {
 					date.year++;
@@ -173,21 +165,45 @@ namespace myLibrary {
 
 			while (isDate1LessThanDate2(date1, date2)) {
 				counter++;
-				date1 = addOneDayToDate(date1);
+				date1 = increaseDateByOneDay(date1);
 			}
 
 			return counter * swapFlag;
 		}
-		sDate increaseDateByXDate(sDate date, short days) {
+
+		sDate addDays(sDate date, short days) {
+			short remainingDays = days + countDaysFromBeginingOfYear(date.year, date.month, date.day);
+			date.month = 1;
+			short monthDays;
+			while (true) {
+				monthDays = countDaysInMonth(date.year, date.month);
+
+				if (remainingDays > monthDays) {
+					remainingDays = remainingDays - monthDays;
+					date.month++;
+					if (date.month > 12) {
+						date.month = 1;
+						date.year++;
+					}
+				}
+				else {
+					date.day = remainingDays;
+					break;
+				}
+
+			}
+			return date;
+		}
+		sDate increaseDateByXDay(sDate date, short days) {
 			for (short i = 1;i <= days;i++) {
-				date = addOneDayToDate(date);
+				date = increaseDateByOneDay(date);
 			}
 			return date;
 		}
 		sDate increaseDateByOneWeek(sDate date)
 		{
 			for (short i = 1;i <= 7;i++) {
-				date = addOneDayToDate(date);
+				date = increaseDateByOneDay(date);
 			}
 			return date;
 		}
@@ -253,6 +269,97 @@ namespace myLibrary {
 			return date;
 		}
 
+		sDate decreaseDateByOneDay(sDate date) {
+			if (date.day == 1) {
+				if (date.month == 1) {
+					date.year--;
+					date.day = 31;
+					date.month = 12;
+				}
+				else {
+					date.month--;
+					date.day = countDaysInMonth(date.year, date.month);
+				}
+			}
+			else {
+				date.day--;
+			}
+			return date;
+		}
+		sDate decreaseDateByXDay(sDate date, short days) {
+			for (short i = 1;i <= days;i++) {
+				date = decreaseDateByOneDay(date);
+			}
+			return date;
+		}
+		sDate decreaseDateByOneWeek(sDate date)
+		{
+			for (short i = 1;i <= 7;i++) {
+				date = decreaseDateByOneDay(date);
+			}
+			return date;
+		}
+		sDate decreaseDateByXWeek(sDate date, short weeks)
+		{
+			for (short i = 1;i <= weeks;i++) {
+				date = decreaseDateByOneWeek(date);
+			}
+			return date;
+		}
+		sDate decreaseDateByOneMonth(sDate date)
+		{
+			if (date.month == 1)
+			{
+				date.month = 12;
+				date.year--;
+			}
+			else {
+				date.month--;
+			}
+
+			short days = countDaysInMonth(date.year, date.month);
+			if (days < date.day) {
+				date.day = days;
+			}
+			return date;
+		}
+		sDate decreaseDateByXMonth(sDate date, short months)
+		{
+			for (int i = 1; i <= months;i++) {
+				date = decreaseDateByOneMonth(date);
+			}
+			return date;
+		}
+		sDate decreaseDateByOneYear(sDate date)
+		{
+			date.year--;
+			return date;
+		}
+		sDate decreaseDateByXYear(sDate date, short years)
+		{
+			date.year -= years;
+			return date;
+		}
+		sDate decreaseDateByOneDecade(sDate date)
+		{
+			date.year -= 10;
+			return date;
+		}
+		sDate decreaseDateByXDecade(sDate date, short decades)
+		{
+			date.year -= (10 * decades);
+			return date;
+		}
+		sDate decreaseDateByOneCentury(sDate date)
+		{
+			date.year -= 100;
+			return date;
+		}
+		sDate decreaseDateByOneMillennium(sDate date)
+		{
+			date.year -= 1000;
+			return date;
+		}
 	}
 	namespace read {
 		int readNumber() {
@@ -332,9 +439,9 @@ namespace myLibrary {
 		}
 		calendar::sDate readDate() {
 			calendar::sDate date;
-			date.day = read::readPositiveNumberMsg("Please enter a day :");
+			date.day = read::readNumberInRangeMsg("Please enter a day :", 1, 31);
 			cout << "\n";
-			date.month = read::readPositiveNumberMsg("Please enter a month :");
+			date.month = read::readNumberInRangeMsg("Please enter a month :", 1, 12);
 			cout << "\n";
 			date.year = read::readPositiveNumberMsg("Please enter a year :");
 			cout << "\n";
@@ -374,5 +481,4 @@ namespace myLibrary {
 			return words;
 		}
 	}
-
 }
