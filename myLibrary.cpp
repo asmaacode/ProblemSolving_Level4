@@ -25,6 +25,10 @@ namespace myLibrary {
 	}
 	namespace calendar {
 		struct sDate { short year;short month;short day; };
+		void printDate(sDate date) {
+			cout << date.day << "/" << date.month << "/" << date.year;
+		}
+
 		short getThisYear() {
 			time_t t = time(0);
 			tm* now = localtime(&t);
@@ -52,7 +56,7 @@ namespace myLibrary {
 			today.year = getThisYear();
 			return today;
 		}
-		
+
 		bool isLeapYear(short year) {
 			return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
 		}
@@ -102,7 +106,7 @@ namespace myLibrary {
 			return d;
 		}
 		short getOrderWeekDayOfDate(sDate date) {
-			return getOrderWeekDayOfDate(date.day,date.month,date.year);
+			return getOrderWeekDayOfDate(date.day, date.month, date.year);
 		}
 
 		short countDaysFromBeginingOfYear(short& year, short& month, short day) {
@@ -118,7 +122,7 @@ namespace myLibrary {
 			return date.day;
 		}
 
-		bool isDate1LessThanDate2(sDate date1, sDate date2) {
+		bool isDate1BeforeDate2(sDate date1, sDate date2) {
 			return (date1.year < date2.year) ? true :
 				(date1.year == date2.year) ? (date1.month < date2.month) ? true :
 				(date1.month == date2.month) ? (date1.day < date2.day) : false : false;
@@ -131,6 +135,25 @@ namespace myLibrary {
 		}
 		bool isLastMonthInYear(short month) {
 			return month == 12;
+		}
+		bool isEndOfWeek(sDate date) {
+			return getOrderWeekDayOfDate(date) == 6;
+		}
+		bool isWeekend(sDate date) {
+			short dateOrder = getOrderWeekDayOfDate(date);
+			return dateOrder == 5 || dateOrder == 6;
+		}
+		bool isBusinessDay(sDate date) {
+			return !isWeekend(date);
+		}
+		short countDaysUntilEndOfWeek(sDate date) {
+			return 6 - getOrderWeekDayOfDate(date);
+		}
+		short countDaysUntilEndOfMonth(sDate date) {
+			return (countDaysInMonth(date.year, date.month) - date.day) + 1;
+		}
+		short countDaysUntilEndOfYear(sDate date) {
+			return (countDaysInYear(date.year) - countDaysFromBeginingOfYear(date)) + 1;
 		}
 
 		sDate increaseDateByOneDay(sDate date) {
@@ -158,14 +181,14 @@ namespace myLibrary {
 
 			int counter = (includingEndDay ? 1 : 0);
 			short swapFlag = 1;
-			if (!isDate1LessThanDate2(date1, date2)) {
+			if (!isDate1BeforeDate2(date1, date2)) {
 				swapFlag = -1;
 				swapDates(date1, date2);
 			}
 
-			while (isDate1LessThanDate2(date1, date2)) {
-				counter++;
+			while (isDate1BeforeDate2(date1, date2)) {
 				date1 = increaseDateByOneDay(date1);
+				counter++;
 			}
 
 			return counter * swapFlag;
@@ -440,9 +463,7 @@ namespace myLibrary {
 		calendar::sDate readDate() {
 			calendar::sDate date;
 			date.day = read::readNumberInRangeMsg("Please enter a day :", 1, 31);
-			cout << "\n";
 			date.month = read::readNumberInRangeMsg("Please enter a month :", 1, 12);
-			cout << "\n";
 			date.year = read::readPositiveNumberMsg("Please enter a year :");
 			cout << "\n";
 			return date;
