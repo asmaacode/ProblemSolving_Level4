@@ -25,10 +25,12 @@ namespace myLibrary {
 	}
 	namespace calendar {
 		struct sDate { short year;short month;short day; };
+		struct sPeriod { sDate fromDate;sDate toDate; };
+		enum enCompareDate { Before = -1, Equal = 0, After = 1 };
+
 		void printDate(sDate date) {
 			cout << date.day << "/" << date.month << "/" << date.year;
 		}
-
 		short getThisYear() {
 			time_t t = time(0);
 			tm* now = localtime(&t);
@@ -56,7 +58,6 @@ namespace myLibrary {
 			today.year = getThisYear();
 			return today;
 		}
-
 		bool isLeapYear(short year) {
 			return (year % 400 == 0 || (year % 4 == 0 && year % 100 != 0));
 		}
@@ -130,6 +131,15 @@ namespace myLibrary {
 		bool isDate1EqualDate2(sDate date1, sDate date2) {
 			return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
 		}
+		bool isDate1AfterDate2(sDate date1, sDate date2) {
+			return (!isDate1BeforeDate2(date1, date2));
+		}
+		enCompareDate compareDates(sDate date1, sDate date2) {
+			return
+				isDate1BeforeDate2(date1, date2) ? enCompareDate::Before :
+				isDate1EqualDate2(date1, date2) ? enCompareDate::Equal :
+				enCompareDate::After;
+		}
 		bool isLastDayInMonth(sDate date) {
 			return date.day == countDaysInMonth(date.year, date.month);
 		}
@@ -145,6 +155,14 @@ namespace myLibrary {
 		}
 		bool isBusinessDay(sDate date) {
 			return !isWeekend(date);
+		}
+		bool isOverlapPeriods(sPeriod period1, sPeriod period2) {
+			return(compareDates(period2.toDate, period1.fromDate) != enCompareDate::Before 
+				&& compareDates(period2.fromDate, period1.toDate) != enCompareDate::After);
+		}
+		bool isOverlapPeriods_2(sPeriod period1, sPeriod period2) {
+			return!(compareDates(period2.toDate, period1.fromDate) == enCompareDate::Before || 
+				compareDates(period2.fromDate, period1.toDate) == enCompareDate::After);
 		}
 		short countDaysUntilEndOfWeek(sDate date) {
 			return 6 - getOrderWeekDayOfDate(date);
@@ -192,6 +210,9 @@ namespace myLibrary {
 			}
 
 			return counter * swapFlag;
+		}
+		int periodLength(sPeriod period, bool includingEndDay = false) {
+			return getDifferenceDays(period.fromDate, period.toDate, includingEndDay);
 		}
 
 		sDate addDays(sDate date, short days) {
@@ -468,6 +489,19 @@ namespace myLibrary {
 			cout << "\n";
 			return date;
 		}
+		calendar::sPeriod readPeriod() {
+			calendar::sPeriod period;
+			bool first = true;
+			do {
+				if (!first) cout << "\nWrong entering please reenter the period :\n";else first = false;
+				cout << "From Date:\n";
+				period.fromDate = read::readDate();
+				cout << "To Date:\n";
+				period.toDate = read::readDate();
+			} while (isDate1AfterDate2(period.fromDate, period.toDate));
+			return period;
+		}
+
 	}
 	namespace draw {
 		string generateLine(short length = 0, char symbol = '_') {
