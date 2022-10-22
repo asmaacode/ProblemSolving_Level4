@@ -156,13 +156,16 @@ namespace myLibrary {
 		bool isBusinessDay(sDate date) {
 			return !isWeekend(date);
 		}
-		bool isOverlapPeriods(sPeriod period1, sPeriod period2) {
+		bool isPeriodsOverlap(sPeriod period1, sPeriod period2) {
 			return(compareDates(period2.toDate, period1.fromDate) != enCompareDate::Before 
 				&& compareDates(period2.fromDate, period1.toDate) != enCompareDate::After);
 		}
-		bool isOverlapPeriods_2(sPeriod period1, sPeriod period2) {
+		bool isPeriodsOverlap_2(sPeriod period1, sPeriod period2) {
 			return!(compareDates(period2.toDate, period1.fromDate) == enCompareDate::Before || 
 				compareDates(period2.fromDate, period1.toDate) == enCompareDate::After);
+		}
+		bool isDateInPeriod(sPeriod period, sDate date) {
+			return (compareDates(period.fromDate, date) != enCompareDate::Before || compareDates(date, period.toDate) != enCompareDate::After);
 		}
 		short countDaysUntilEndOfWeek(sDate date) {
 			return 6 - getOrderWeekDayOfDate(date);
@@ -196,20 +199,13 @@ namespace myLibrary {
 			date2 = Temp;
 		}
 		int getDifferenceDays(sDate  date1, sDate date2, bool includingEndDay = false) {
-
-			int counter = (includingEndDay ? 1 : 0);
-			short swapFlag = 1;
-			if (!isDate1BeforeDate2(date1, date2)) {
-				swapFlag = -1;
-				swapDates(date1, date2);
-			}
-
-			while (isDate1BeforeDate2(date1, date2)) {
-				date1 = increaseDateByOneDay(date1);
-				counter++;
-			}
-
-			return counter * swapFlag;
+			int days = 0; 
+			while (isDate1BeforeDate2(date1, date2)) 
+			{ days++; 
+			date1 = increaseDateByOneDay(date1); 
+			} 
+			return
+				includingEndDay ? ++days : days;
 		}
 		int periodLength(sPeriod period, bool includingEndDay = false) {
 			return getDifferenceDays(period.fromDate, period.toDate, includingEndDay);
@@ -498,7 +494,7 @@ namespace myLibrary {
 				period.fromDate = read::readDate();
 				cout << "To Date:\n";
 				period.toDate = read::readDate();
-			} while (isDate1AfterDate2(period.fromDate, period.toDate));
+			} while (isDate1AfterDate2(period.fromDate, period.toDate) && !isDate1EqualDate2(period.fromDate,period.toDate) );
 			return period;
 		}
 
