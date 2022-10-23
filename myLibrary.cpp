@@ -23,6 +23,25 @@ namespace myLibrary {
 		cin >> answer;
 		return ((answer == 'Y' || answer == 'y') ? true : false);
 	}
+	namespace manipulators {
+		vector<string> split(string& s, string delimiter = " ") {
+			vector<string> words;
+			int currentIndex = 0;
+			string word = "";
+			s = s + delimiter;
+			while ((currentIndex = s.find(delimiter)) != s.npos) {
+				word = s.substr(0, currentIndex);
+				s.erase(0, currentIndex + delimiter.length());
+				if (word != "" && word != delimiter)
+					words.push_back(word);
+			}
+			return words;
+		}
+		void replace(string& fullStatement, string oldPart, string newPart) {
+			short fromIndex = fullStatement.find(oldPart);
+			fullStatement = fullStatement.replace(fromIndex, oldPart.length(), newPart);
+		}
+	}
 	namespace calendar {
 		struct sDate { short year;short month;short day; };
 		struct sPeriod { sDate fromDate;sDate toDate; };
@@ -123,6 +142,10 @@ namespace myLibrary {
 			return date.day;
 		}
 
+		bool isValidDate(sDate date) {
+			return(date.month >= 1 && date.month <= 12 &&
+				date.day >= 1 && date.day <= countDaysInMonth(date.year, date.month));
+		}
 		bool isDate1BeforeDate2(sDate date1, sDate date2) {
 			return (date1.year < date2.year) ? true :
 				(date1.year == date2.year) ? (date1.month < date2.month) ? true :
@@ -157,11 +180,11 @@ namespace myLibrary {
 			return !isWeekend(date);
 		}
 		bool isPeriodsOverlap(sPeriod period1, sPeriod period2) {
-			return(compareDates(period2.toDate, period1.fromDate) != enCompareDate::Before 
+			return(compareDates(period2.toDate, period1.fromDate) != enCompareDate::Before
 				&& compareDates(period2.fromDate, period1.toDate) != enCompareDate::After);
 		}
 		bool isPeriodsOverlap_2(sPeriod period1, sPeriod period2) {
-			return!(compareDates(period2.toDate, period1.fromDate) == enCompareDate::Before || 
+			return!(compareDates(period2.toDate, period1.fromDate) == enCompareDate::Before ||
 				compareDates(period2.fromDate, period1.toDate) == enCompareDate::After);
 		}
 		bool isDateInPeriod(sPeriod period, sDate date) {
@@ -199,18 +222,48 @@ namespace myLibrary {
 			date2 = Temp;
 		}
 		int getDifferenceDays(sDate  date1, sDate date2, bool includingEndDay = false) {
-			int days = 0; 
-			while (isDate1BeforeDate2(date1, date2)) 
-			{ days++; 
-			date1 = increaseDateByOneDay(date1); 
-			} 
+			int days = 0;
+			while (isDate1BeforeDate2(date1, date2))
+			{
+				days++;
+				date1 = increaseDateByOneDay(date1);
+			}
 			return
 				includingEndDay ? ++days : days;
 		}
 		int periodLength(sPeriod period, bool includingEndDay = false) {
 			return getDifferenceDays(period.fromDate, period.toDate, includingEndDay);
 		}
-
+		sDate stringToDate(string stringDate) {
+			sDate date;
+			try {
+				vector<string>dateSliced = manipulators::split(stringDate, "/");
+				date.day = stoi(dateSliced.at(0));
+				date.month = stoi(dateSliced.at(1));
+				date.year = stoi(dateSliced.at(2));
+			}
+			catch (exception ex) {
+				if (!isValidDate(date)) {
+					cout << "Wrong input !!!\n";
+					date.day = 1;
+					date.month = 1;
+					date.year = 1900;
+				}
+			}
+			return date;
+		}
+		string dateToString(sDate date) {
+			string stringDate;
+			stringDate = to_string(date.day) + "/" + to_string(date.month) + "/" + to_string(date.year);
+			return stringDate;
+		}
+		string dateFormat(sDate date, string format = "dd/mm/yyyy") {
+			string result = format;
+			manipulators::replace(result, "dd", to_string(date.day));
+			manipulators::replace(result, "mm", to_string(date.month));
+			manipulators::replace(result, "yyyy", to_string(date.year));
+			return result;
+		}
 		sDate addDays(sDate date, short days) {
 			short remainingDays = days + countDaysFromBeginingOfYear(date.year, date.month, date.day);
 			date.month = 1;
@@ -479,10 +532,15 @@ namespace myLibrary {
 		}
 		calendar::sDate readDate() {
 			calendar::sDate date;
-			date.day = read::readNumberInRangeMsg("Please enter a day :", 1, 31);
-			date.month = read::readNumberInRangeMsg("Please enter a month :", 1, 12);
-			date.year = read::readPositiveNumberMsg("Please enter a year :");
-			cout << "\n";
+			bool first = true;
+			do {
+				if (!first) cout << "\nWrong entering please reenter the date :\n";else first = false;
+				date.day = read::readNumberMsg("Please enter a day :");
+				date.month = read::readNumberMsg("Please enter a month :");
+				date.year = read::readPositiveNumberMsg("Please enter a year :");
+				cout << "\n";
+			} while (!calendar::isValidDate(date));
+
 			return date;
 		}
 		calendar::sPeriod readPeriod() {
@@ -494,7 +552,7 @@ namespace myLibrary {
 				period.fromDate = read::readDate();
 				cout << "To Date:\n";
 				period.toDate = read::readDate();
-			} while (isDate1AfterDate2(period.fromDate, period.toDate) && !isDate1EqualDate2(period.fromDate,period.toDate) );
+			} while (isDate1AfterDate2(period.fromDate, period.toDate) && !isDate1EqualDate2(period.fromDate, period.toDate));
 			return period;
 		}
 
@@ -515,21 +573,6 @@ namespace myLibrary {
 				length--;
 			}
 			return tabs;
-		}
-	}
-	namespace manipulators {
-		vector<string> split(string& s, string delimiter = " ") {
-			vector<string> words;
-			int currentIndex = 0;
-			string word = "";
-			s = s + delimiter;
-			while ((currentIndex = s.find(delimiter)) != s.npos) {
-				word = s.substr(0, currentIndex);
-				s.erase(0, currentIndex + delimiter.length());
-				if (word != "" && word != delimiter)
-					words.push_back(word);
-			}
-			return words;
 		}
 	}
 }
