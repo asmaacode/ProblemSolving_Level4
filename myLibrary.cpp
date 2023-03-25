@@ -41,6 +41,22 @@ namespace myLibrary {
 			short fromIndex = fullStatement.find(oldPart);
 			fullStatement = fullStatement.replace(fromIndex, oldPart.length(), newPart);
 		}
+		string capitalization(string statement) {
+			for (int i = 0;i < statement.length();i++) {
+				if (statement[i] != ' ') {
+					statement[i] = toupper(statement[i]);
+				}
+			}
+			return statement;
+		}
+		string smallization(string statement) {
+			for (int i = 0;i < statement.length();i++) {
+				if (statement[i] != ' ') {
+					statement[i] = tolower(statement[i]);
+				}
+			}
+			return statement;
+		}
 	}
 	namespace calendar {
 		struct sDate { short year;short month;short day; };
