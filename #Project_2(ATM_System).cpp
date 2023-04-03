@@ -16,7 +16,9 @@ struct stClient {
 	float AccountBalance = 0.0;
 	bool MarkForDelete = false;
 };
-enum enMenuOptions { QuickWithdraw = 1, NormalWithdraw = 2, Deposite = 3, CheckBalance = 4, Exit = 5 };
+enum enMenuOptions { QuickWithdraw = 1, NormalWithdraw = 2, Deposit = 3, CheckBalance = 4, Exit = 5 };
+enum enOperationStatus { Success = 1, Failed = -1, NoTransaction = 0 };
+
 const string clientsFileName = "clients.txt";
 const string delimiter = "#//#";
 stClient currentClient;
@@ -122,6 +124,36 @@ namespace GeneralClients {
 		General::rewriteFile(GeneralClients::generateClientsLines(clientsList), clientsFileName);
 	}
 }
+namespace GeneralATM {
+	enOperationStatus withdraw(int amount) {
+		if (amount <= currentClient.AccountBalance) {
+			if (doYouQuestion("Are you sure you want to perform this transaction?"))
+			{
+				currentClient.AccountBalance -= amount;
+				GeneralClients::updateCurrentClientData();
+				return enOperationStatus::Success;
+			}
+		}
+		else
+			return enOperationStatus::Failed;
+
+		return enOperationStatus::NoTransaction;
+	}
+	enOperationStatus deposit(int amount) {
+		if (amount > 0) {
+			if (doYouQuestion("Are you sure you want to perform this transaction?"))
+			{
+				currentClient.AccountBalance += amount;
+				GeneralClients::updateCurrentClientData();
+				return enOperationStatus::Success;
+			}
+		}
+		else
+			return enOperationStatus::Failed;
+
+		return enOperationStatus::NoTransaction;
+	}
+}
 namespace LoginScreen {
 	bool isValidClient(stClient& client) {
 		string pincode = client.PinCode;
@@ -157,26 +189,11 @@ namespace CheckBalanceScreen {
 	}
 }
 namespace QuickWithdrawScreen {
-	enum enOperationStatus { Success = 1, Failed = -1, NoTransaction = 0 };
-
-	enOperationStatus withdraw(float amount) {
-		if (amount <= currentClient.AccountBalance) {
-			if (doYouQuestion("Are you sure you want to perform this transaction?"))
-			{
-				currentClient.AccountBalance -= amount;
-				GeneralClients::updateCurrentClientData();
-				return enOperationStatus::Success;
-			}
-		}
-		else
-			return enOperationStatus::Failed;
-
-		return enOperationStatus::NoTransaction;
-	}
 	void quickWithdrawCtrl() {
-		int choice = read::readNumberInRangeMsg("Choose what to withdraw from the list above ?", 1, 8);
+		int choice = read::readNumberInRangeMsg("Choose what to withdraw from the list above ?", 1, 9);
+		if (choice == 9) return;
 		int amount[8] = { 20,50,100,200,400,600,800,1000 };
-		enOperationStatus result = withdraw(amount[choice - 1]);
+		enOperationStatus result = GeneralATM::withdraw(amount[choice - 1]);
 		if (result == enOperationStatus::Success) {
 			cout << "Done Successfully.";
 			cout << "Your Balance is " << CheckBalanceScreen::getBalance() << "\n";
@@ -185,11 +202,10 @@ namespace QuickWithdrawScreen {
 			cout << "The amount exceed your balance , make another choice.\n";
 			quickWithdrawCtrl();
 		}
-
 	}
 	void drawQuickWithdrawScreen() {
 		General::getScreenReady("Quick Withdraw Screen", '=');
-		cout << draw::generateTabs(3) << "[1] 20  " << draw::generateTabs(3) << "[2] 50 " << "\n";
+		cout << draw::generateTabs(3) << "[1] 20 " << draw::generateTabs(3) << "[2] 50 " << "\n";
 		cout << draw::generateTabs(3) << "[3] 100" << draw::generateTabs(3) << "[4] 200" << "\n";
 		cout << draw::generateTabs(3) << "[5] 400" << draw::generateTabs(3) << "[6] 600" << "\n";
 		cout << draw::generateTabs(3) << "[7] 800" << draw::generateTabs(3) << "[8] 1000" << "\n";
@@ -197,6 +213,45 @@ namespace QuickWithdrawScreen {
 		cout << draw::generateLine(50, '\n ') << endl;
 		cout << "Your Balance is " << CheckBalanceScreen::getBalance() << "\n";
 		quickWithdrawCtrl();
+	}
+}
+namespace NormalWithdrawScreen {
+	void normalWithdrawCtrl() {
+		int amount = 0;
+		do { amount = read::readPositiveNumberMsg("Enter an amount  multiply of 5's ?"); } while (amount % 5 != 0);
+		enOperationStatus result = GeneralATM::withdraw(amount);
+		if (result == enOperationStatus::Success) {
+			cout << "Done Successfully.";
+			cout << "Your Balance is " << CheckBalanceScreen::getBalance() << "\n";
+		}
+		if (result == enOperationStatus::Failed) {
+			cout << "The amount exceed your balance , make another choice.\n";
+			normalWithdrawCtrl();
+		}
+	}
+	void drawNormalWithdrawScreen() {
+		General::getScreenReady("Normal Withdraw Screen", '=');
+		normalWithdrawCtrl();
+
+	}
+}
+namespace DepositScreen {
+	void depositCtrl() {
+		int amount =  read::readPositiveNumberMsg("Enter a deposit positive amount ?"); 
+	
+		enOperationStatus result = GeneralATM::deposit(amount);
+		if (result == enOperationStatus::Success) {
+			cout << "Done Successfully.";
+			cout << "Your Balance is " << CheckBalanceScreen::getBalance() << "\n";
+		}
+		if (result == enOperationStatus::Failed) {
+			cout << "Something wrong please try again.\n";
+			depositCtrl();
+		}
+	}
+	void drawDepositScreen() {
+		General::getScreenReady("Deposit Screen", '=');
+		depositCtrl();
 	}
 }
 void controlsMenu() {
@@ -207,9 +262,13 @@ void controlsMenu() {
 		break;
 	}
 	case enMenuOptions::NormalWithdraw: {
+		NormalWithdrawScreen::drawNormalWithdrawScreen();
+		goBackToMenu();
 		break;
 	}
-	case enMenuOptions::Deposite: {
+	case enMenuOptions::Deposit: {
+		DepositScreen::drawDepositScreen();
+		goBackToMenu();
 		break;
 	}
 	case enMenuOptions::CheckBalance: {
@@ -229,7 +288,7 @@ void drawMenu() {
 	General::getScreenReady("Main Menu Screen", '=');
 	cout << setw(9) << draw::generateTabs(9) << "[1] Quick Withdraw\n";
 	cout << setw(9) << draw::generateTabs(9) << "[2] Normal Withdraw.\n";
-	cout << setw(9) << draw::generateTabs(9) << "[3] Deposite.\n";
+	cout << setw(9) << draw::generateTabs(9) << "[3] Deposit.\n";
 	cout << setw(9) << draw::generateTabs(9) << "[4] CheckBalance.\n";
 	cout << setw(9) << draw::generateTabs(9) << "[5] Logout.\n";
 	cout << draw::generateLine(50, '=') << "\n";
