@@ -531,6 +531,12 @@ namespace myLibrary {
 			getline(cin, txt);
 			return  txt;
 		}
+		string readTextWithoutWs(string message) {
+			string txt = "";
+			cout << message;
+			cin>>txt;
+			return  txt;
+		}
 		char readChar(string message) {
 			char txt = ' ';
 			cout << message << "\n";
